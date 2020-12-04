@@ -14,7 +14,7 @@ const graphql: Plugin = {
       });
     });
 
-    build.onLoad({ filter: /\.(graphql|gql)$/i }, async (args) => {
+    build.onLoad({ filter: /.*/, namespace: 'graphql-loader' }, async (args) => {
       const source = await fs.readFile(args.path);
       return {
         contents: loader(source.toString()),
