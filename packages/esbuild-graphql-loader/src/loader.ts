@@ -41,38 +41,38 @@ function expandImports(source: string) {
   let headerCode = '';
 
   importFiles.forEach((importFile, index) => {
-    headerCode += `import File_${index} from ${importFile}` + os.EOL;
+    headerCode += `import File_${index} from ${importFile};${os.EOL}`;
   });
   outputCode = headerCode + outputCode + os.EOL;
   importFiles.forEach((_, index) => {
-    const appendDef = `doc.definitions = doc.definitions.concat(unique(File_${index}.definitions));`
+    const appendDef = `doc.definitions = doc.definitions.concat(unique(File_${index}.definitions));`;
     outputCode += appendDef + os.EOL;
   });
 
   return outputCode;
 }
 
-export default function loader(source: string) {
+export default function loader(source: string): string {
   const doc = gql`${source}`;
-  let headerCode = `const doc = ${JSON.stringify(doc)};` + os.EOL;
+  let headerCode = `const doc = ${JSON.stringify(doc)};${os.EOL}`;
 
   if (doc.loc) {
-    headerCode += `doc.loc.source = ${JSON.stringify(doc.loc.source)}` + os.EOL;
+    headerCode += `doc.loc.source = ${JSON.stringify(doc.loc.source)};${os.EOL}`;
   }
 
-  let outputCode = "";
+  let outputCode = '';
 
   // Allow multiple query/mutation definitions in a file. This parses out dependencies
   // at compile time, and then uses those at load time to create minimal query documents
   // We cannot do the latter at compile time due to how the #import code works.
-  let operationCount = doc.definitions.reduce((accum, op) => (
-    (op.kind === "OperationDefinition")
+  const operationCount = doc.definitions.reduce((accum, op) => (
+    (op.kind === 'OperationDefinition')
       ? accum + 1
       : accum
   ), 0);
 
   if (operationCount < 1) {
-    outputCode += `export default doc;`
+    outputCode += 'export default doc;';
   } else {
     outputCode += `
 
@@ -158,20 +158,19 @@ export default function loader(source: string) {
       return newDoc;
     }
     export default doc;    
-    `
+    `;
 
-    for (const op of doc.definitions) {
-      if (op.kind === "OperationDefinition") {
+    for (let i = 0; i < doc.definitions.length; i += 1) {
+      const op = doc.definitions[i];
+      if (op.kind === 'OperationDefinition') {
         if (!op.name) {
           if (operationCount > 1) {
-            throw "Query/mutation names are required for a document with multiple definitions";
-          } else {
-            continue;
+            throw new Error('Query/mutation names are required for a document with multiple definitions');
           }
+        } else {
+          const opName = op.name.value;
+          outputCode += `export const ${opName} = oneQuery(doc, '${opName}');${os.EOL}`;
         }
-
-        const opName = op.name.value;
-        outputCode += `export const ${opName} = oneQuery(doc, '${opName}');` + os.EOL;
       }
     }
   }
@@ -180,4 +179,4 @@ export default function loader(source: string) {
   const allCode = headerCode + os.EOL + importOutputCode + os.EOL + outputCode + os.EOL;
 
   return allCode;
-};
+}
