@@ -1,0 +1,12 @@
+{
+  "name": "graphql-example",
+  "version": "0.0.0",
+  "main": "index.js",
+  "author": "Alexis Munsayac",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "esbuild": "^0.8.17",
+    "esbuild-graphql-loader": "^0.0.0"
+  }
+}

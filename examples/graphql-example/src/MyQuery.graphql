@@ -1,0 +1,8 @@
+#import './BaseTypes.graphql';
+
+query MyQuery {
+  hero {
+    name
+    appearsIn
+  }
+}
